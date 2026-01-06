@@ -12,14 +12,14 @@ namespace graphics
 //
 // 通过定义以下宏来启用更多 emoji 分类:
 //
-// 基础集: 105 个 (~3570 bytes) - 总是包含
+// 基础集: 93 个 (~3162 bytes) - 总是包含
 //
 // 扩展分类 (按含义分组):
 //
-// #define EMOTE_INCLUDE_SMILEYS_EMOTION           //   67 个 (~ 2278 bytes) - 笑脸和情感表情
+// #define EMOTE_INCLUDE_SMILEYS_EMOTION           //   66 个 (~ 2244 bytes) - 笑脸和情感表情
 // #define EMOTE_INCLUDE_HAND_FINGERS              //    9 个 (~  306 bytes) - 手势和手指
-// #define EMOTE_INCLUDE_WEATHER                   //  195 个 (~ 6630 bytes) - 天气符号
-// #define EMOTE_INCLUDE_NATURE                    //   25 个 (~  850 bytes) - 自然现象
+// #define EMOTE_INCLUDE_WEATHER                   //  194 个 (~ 6596 bytes) - 天气符号
+// #define EMOTE_INCLUDE_NATURE                    //   24 个 (~  816 bytes) - 自然现象
 // #define EMOTE_INCLUDE_ANIMALS                   //   64 个 (~ 2176 bytes) - 动物
 // #define EMOTE_INCLUDE_FOOD_DRINK                //   76 个 (~ 2584 bytes) - 食物和饮料
 // #define EMOTE_INCLUDE_ACTIVITIES                //   93 个 (~ 3162 bytes) - 活动
@@ -33,7 +33,7 @@ namespace graphics
 // #define EMOTE_INCLUDE_TECHNICAL                 //  256 个 (~ 8704 bytes) - 技术符号
 // #define EMOTE_INCLUDE_CURRENCY                  //   48 个 (~ 1632 bytes) - 货币符号
 // #define EMOTE_INCLUDE_NUMBER_FORMS              //   64 个 (~ 2176 bytes) - 数字形式
-// #define EMOTE_INCLUDE_SUPPLEMENTAL_SYMBOLS      //  241 个 (~ 8194 bytes) - 补充符号
+// #define EMOTE_INCLUDE_SUPPLEMENTAL_SYMBOLS      //  239 个 (~ 8126 bytes) - 补充符号
 // #define EMOTE_INCLUDE_PLAYING_CARDS             //   96 个 (~ 3264 bytes) - 扑克牌
 // #define EMOTE_INCLUDE_GAME_SYMBOLS              //  100 个 (~ 3400 bytes) - 游戏符号
 // #define EMOTE_INCLUDE_ALPHANUMERIC              //  256 个 (~ 8704 bytes) - 字母数字
