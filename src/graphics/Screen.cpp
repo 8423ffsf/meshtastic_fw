@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gps/RTC.h"
 #include "graphics/ScreenFonts.h"
 #include "graphics/SharedUIDisplay.h"
-// #include "graphics/emotes.h"
+#include "graphics/emotes.h"
 #include "graphics/images.h"
 #include "input/TouchScreenImpl1.h"
 #include "main.h"
@@ -91,6 +91,9 @@ uint16_t TFT_MESH = COLOR565(0x67, 0xEA, 0x94);
 #endif
 
 #if OLED_CJK
+#ifdef HAS_XIP_QSPI
+#define PROGMEM __attribute__((section(".progmem")))
+#endif
 #include <utf8_12x12.h>
 #include <utf8_16x16.h>
 #include <utf8_24x24.h>

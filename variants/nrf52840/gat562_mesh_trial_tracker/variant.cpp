@@ -36,9 +36,10 @@ void initVariant()
     pinMode(PIN_LED1, OUTPUT);
     ledOff(PIN_LED1);
 
+#ifndef GAT562_MESH_WATCH
     pinMode(PIN_LED2, OUTPUT);
     ledOff(PIN_LED2);
-
+#endif
     // 3V3 Power Rail
     pinMode(PIN_3V3_EN, OUTPUT);
     digitalWrite(PIN_3V3_EN, HIGH);

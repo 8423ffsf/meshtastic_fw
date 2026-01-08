@@ -50,13 +50,21 @@ extern "C" {
 
 // LEDs
 #define PIN_LED1 (35)
+#ifndef GAT562_MESH_WATCH
 #define PIN_LED2 (36)
+#endif
 
 #define LED_BUILTIN PIN_LED1
+#ifndef GAT562_MESH_WATCH
 #define LED_CONN PIN_LED2
+#endif
 
 #define LED_GREEN PIN_LED1
+#ifndef GAT562_MESH_WATCH
 #define LED_BLUE PIN_LED2
+#else
+#define LED_BLUE 0xFF
+#endif
 
 #define LED_STATE_ON 1 // State when LED is litted
 

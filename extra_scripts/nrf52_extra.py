@@ -3,8 +3,8 @@
 # trunk-ignore-all(flake8/F821): For SConstruct imports
 
 import sys
-from os.path import basename
-
+from os.path import basename, dirname, join
+from intelhex import IntelHex
 Import("env")
 
 
@@ -12,15 +12,53 @@ Import("env")
 # Convert hex to uf2 for nrf52
 def nrf52_hex_to_uf2(source, target, env):
     hex_path = target[0].get_abspath()
-    # When using merged hex, drop 'merged' from uf2 filename
-    uf2_path = hex_path.replace(".merged.", ".")
-    uf2_path = uf2_path.replace(".hex", ".uf2")
-    env.Execute(
-        env.VerboseAction(
-            f'"{sys.executable}" ./bin/uf2conv.py "{hex_path}" -c -f 0xADA52840 -o "{uf2_path}"',
-            f"Generating UF2 file from {basename(hex_path)}",
+
+    ih = IntelHex(hex_path)
+
+    # 获取所有地址并排序
+    addresses = sorted(ih.addresses())
+
+    if not addresses:
+        print("No data in HEX, skip UF2 generation")
+        return
+
+    segments = []
+    seg_start = addresses[0]
+    seg_last = addresses[0]
+
+    for addr in addresses[1:]:
+        if addr != seg_last + 1:
+            # 出现不连续
+            segments.append((seg_start, seg_last))
+            seg_start = addr
+        seg_last = addr
+
+    segments.append((seg_start, seg_last))
+
+    print(f"Detected {len(segments)} HEX segment(s):")
+    for i, (s, e) in enumerate(segments):
+        print(f"  [{i}] 0x{s:08X} - 0x{e:08X} ({e - s + 1} bytes)")
+
+    out_dir = dirname(hex_path)
+    base = basename(hex_path).replace(".hex", "")
+
+    for idx, (start, end) in enumerate(segments):
+        seg_hex = IntelHex()
+        for addr in range(start, end + 1):
+            seg_hex[addr] = ih[addr]
+
+        seg_hex_path = join(out_dir, f"{base}.seg{idx}.hex")
+        seg_uf2_path = join(out_dir, f"{base}.seg{idx}.uf2")
+
+        seg_hex.write_hex_file(seg_hex_path)
+
+        env.Execute(
+            env.VerboseAction(
+                f'"{sys.executable}" ./bin/uf2conv.py "{seg_hex_path}" '
+                f'-c -f 0xADA52840 -o "{seg_uf2_path}"',
+                f"Generating UF2 [{idx}] from 0x{start:08X}",
+            )
         )
-    )
 
 
 def nrf52_mergehex(source, target, env):

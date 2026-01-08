@@ -9,6 +9,10 @@
 #define PROGMEM
 #endif
 
+#ifdef HAS_XIP_QSPI
+#define PROGMEM __attribute__((section(".progmem")))
+#endif
+
 /**
  * Monospaced Plain 30
  */

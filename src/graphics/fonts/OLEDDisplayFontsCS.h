@@ -7,6 +7,10 @@
 #define PROGMEM
 #endif
 
+#ifdef HAS_XIP_QSPI
+#define PROGMEM __attribute__((section(".progmem")))
+#endif
+
 /**
  * Localization for Czech and Slovak language containing glyphs with diacritic.
  */

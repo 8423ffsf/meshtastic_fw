@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef HAS_XIP_QSPI
+#define PROGMEM __attribute__((section(".progmem")))
+#endif
+
 #define SATELLITE_IMAGE_WIDTH 16
 #define SATELLITE_IMAGE_HEIGHT 15
 const uint8_t SATELLITE_IMAGE[] PROGMEM = {0x00, 0x08, 0x00, 0x1C, 0x00, 0x0E, 0x20, 0x07, 0x70, 0x02,
