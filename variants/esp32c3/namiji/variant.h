@@ -34,14 +34,36 @@ extern "C" {
 #define EBYTE_E22_400M33S
 
 #define LORA_DIO0 RADIOLIB_NC
+
+#ifdef NAMIJI_PREVIEW
 #define LORA_RESET (10)
 #define LORA_DIO1 (21)
-#define LORA_RXEN (5)
 #define LORA_BUSY (20)
+#define LORA_RXEN (5)
+#define LORA_SCK (7)
+#define LORA_MISO (9)
+#define LORA_MOSI (8)
+#define LORA_CS (6)
+#elif defined(NAMIJI_C3V0)
+#define LORA_RESET (10)
+#define LORA_DIO1 (21)
+#define LORA_BUSY (20)
+#define LORA_RXEN (5)
 #define LORA_SCK (6)
 #define LORA_MISO (9)
 #define LORA_MOSI (8)
 #define LORA_CS (7)
+#elif defined(NAMIJI_C3V1) || defined(SAKURAPI_NAMIJI)
+#define LORA_RESET (10)
+#define LORA_DIO1 (20)
+#define LORA_BUSY (21)
+#define LORA_RXEN (5)
+#define LORA_SCK (6)
+#define LORA_MISO (9)
+#define LORA_MOSI (8)
+#define LORA_CS (7)
+#endif
+
 
 #define SX126X_CS LORA_CS
 #define SX126X_DIO1 LORA_DIO1
