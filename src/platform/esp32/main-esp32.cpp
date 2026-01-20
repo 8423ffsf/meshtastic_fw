@@ -153,7 +153,7 @@ void esp32Setup()
     MeshtasticOTA::initialize();
 #endif
 
-    // enableModemSleep();
+    enableModemSleep();
 
 // Since we are turning on watchdogs rather late in the release schedule, we really don't want to catch any
 // false positives.  The wait-to-sleep timeout for shutting down radios is 30 secs, so pick 45 for now.
