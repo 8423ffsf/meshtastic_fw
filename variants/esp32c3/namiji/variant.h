@@ -10,11 +10,16 @@ extern "C" {
 #endif // __cplusplus
 
 // I2C (Wire) & OLED
-// #define WIRE_INTERFACES_COUNT (1)
-#define I2C_SDA (1)
+#define WIRE_INTERFACES_COUNT (1)
+#define I2C_SDA (2)
 #define I2C_SCL (0)
 
 //#define USE_SSD1306
+
+// VIN ADC
+#define BATTERY_PIN (1)
+#define ADC_CHANNEL ADC1_GPIO1_CHANNEL
+#define ADC_MULTIPLIER 5.52
 
 // GPS
 #undef GPS_RX_PIN
