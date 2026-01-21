@@ -390,7 +390,17 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     meshtastic_Telemetry telemetry;
     const char *sender;
     String agoStr;
-    bool isLocal = (state->currentFrame == 0);
+    
+    // // 简化逻辑：如果receivedPackets为空，总是显示本地数据
+    // // 否则，frame 0显示本地数据，frame 1+显示其他设备的数据
+    // bool isLocal;
+    // if (receivedPackets.empty()) {
+    //     // 没有其他设备的数据，总是显示本地数据
+    //     isLocal = true;
+    // } else {
+    //     isLocal = (state->currentFrame == 0);
+    // }
+    bool isLocal = true;
 
     if (isLocal) {
         // 显示本地数据
