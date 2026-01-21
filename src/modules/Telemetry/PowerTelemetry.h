@@ -9,6 +9,7 @@
 #include "ProtobufModule.h"
 #include <OLEDDisplay.h>
 #include <OLEDDisplayUi.h>
+#include <vector>
 
 class PowerTelemetryModule : private concurrency::OSThread, public ProtobufModule<meshtastic_Telemetry>
 {
@@ -25,6 +26,7 @@ class PowerTelemetryModule : private concurrency::OSThread, public ProtobufModul
         setIntervalFromNow(10 * 1000);
     }
     virtual bool wantUIFrame() override;
+    uint32_t getFrameCount() { return 1 + receivedPackets.size(); }
 #if !HAS_SCREEN
     void drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y);
 #else
@@ -50,6 +52,8 @@ class PowerTelemetryModule : private concurrency::OSThread, public ProtobufModul
   private:
     bool firstTime = 1;
     meshtastic_MeshPacket *lastMeasurementPacket;
+    std::vector<meshtastic_MeshPacket*> receivedPackets;
+    const size_t maxReceivedPackets = 10;
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute
     uint32_t lastSentToMesh = 0;
     uint32_t lastSentToPhone = 0;

@@ -122,22 +122,34 @@ void PowerTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiState *s
     // === Header ===
     graphics::drawCommonHeader(display, x, y, titleStr);
 
-    if (lastMeasurementPacket == nullptr) {
-        // In case of no valid packet, display "Power Telemetry", "No measurement"
-        display->drawString(x, graphics::getTextPositions(display)[line++], "No measurement");
-        return;
-    }
-
-    // Decode the last power packet
     meshtastic_Telemetry lastMeasurement;
-    uint32_t agoSecs = service->GetTimeSinceMeshPacket(lastMeasurementPacket);
-    const char *lastSender = getSenderShortName(*lastMeasurementPacket);
+    const char *lastSender;
+    uint32_t agoSecs;
+    bool isLocal = (state->currentFrame == 0);
 
-    const meshtastic_Data &p = lastMeasurementPacket->decoded;
-    if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &lastMeasurement)) {
-        display->drawString(x, graphics::getTextPositions(display)[line++], "Measurement Error");
-        LOG_ERROR("Unable to decode last packet");
-        return;
+    if (isLocal) {
+        // 显示本地数据
+        if (!getPowerTelemetry(&lastMeasurement)) {
+            display->drawString(x, graphics::getTextPositions(display)[line++], "No measurement");
+            return;
+        }
+        lastSender = "Local";
+        agoSecs = 0;
+    } else {
+        // 显示其他设备的第(state->currentFrame - 1)个包
+        size_t index = state->currentFrame - 1;
+        if (index >= receivedPackets.size() || !receivedPackets[index]) {
+            display->drawString(x, graphics::getTextPositions(display)[line++], "No Data");
+            return;
+        }
+        const meshtastic_Data &p = receivedPackets[index]->decoded;
+        if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &lastMeasurement)) {
+            display->drawString(x, graphics::getTextPositions(display)[line++], "Measurement Error");
+            LOG_ERROR("Unable to decode packet");
+            return;
+        }
+        lastSender = getSenderShortName(*receivedPackets[index]);
+        agoSecs = service->GetTimeSinceMeshPacket(receivedPackets[index]);
     }
 
     // Display "Pow. From: ..."
@@ -181,11 +193,19 @@ bool PowerTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                  t->variant.power_metrics.ch2_voltage, t->variant.power_metrics.ch2_current, t->variant.power_metrics.ch3_voltage,
                  t->variant.power_metrics.ch3_current);
 #endif
-        // release previous packet before occupying a new spot
-        if (lastMeasurementPacket != nullptr)
-            packetPool.release(lastMeasurementPacket);
-
-        lastMeasurementPacket = packetPool.allocCopy(mp);
+        // 如果是本地设备，更新lastMeasurementPacket用于本地显示
+        if (mp.from == nodeDB->getNodeNum()) {
+            if (lastMeasurementPacket != nullptr)
+                packetPool.release(lastMeasurementPacket);
+            lastMeasurementPacket = packetPool.allocCopy(mp);
+        } else {
+            // 其他设备，添加到receivedPackets
+            if (receivedPackets.size() >= maxReceivedPackets) {
+                packetPool.release(receivedPackets.front());
+                receivedPackets.erase(receivedPackets.begin());
+            }
+            receivedPackets.push_back(packetPool.allocCopy(mp));
+        }
     }
 
     return false; // Let others look at this message also if they want

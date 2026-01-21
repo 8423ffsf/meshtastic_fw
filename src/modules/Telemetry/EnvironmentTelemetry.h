@@ -14,6 +14,7 @@
 #include "detect/ScanI2CConsumer.h"
 #include <OLEDDisplay.h>
 #include <OLEDDisplayUi.h>
+#include <vector>
 
 class EnvironmentTelemetryModule : private concurrency::OSThread,
                                    public ScanI2CConsumer,
@@ -33,6 +34,7 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
         setIntervalFromNow(10 * 1000);
     }
     virtual bool wantUIFrame() override;
+    uint32_t getFrameCount() { return 1 + receivedPackets.size(); }
 #if !HAS_SCREEN
     void drawFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16_t x, int16_t y);
 #else
@@ -64,6 +66,8 @@ class EnvironmentTelemetryModule : private concurrency::OSThread,
   private:
     bool firstTime = 1;
     meshtastic_MeshPacket *lastMeasurementPacket;
+    std::vector<meshtastic_MeshPacket*> receivedPackets;
+    const size_t maxReceivedPackets = 10;
     uint32_t sendToPhoneIntervalMs = SECONDS_IN_MINUTE * 1000; // Send to phone every minute
     uint32_t lastSentToMesh = 0;
     uint32_t lastSentToPhone = 0;

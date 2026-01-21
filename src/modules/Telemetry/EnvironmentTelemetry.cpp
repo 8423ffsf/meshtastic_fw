@@ -387,18 +387,34 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     const int rowHeight = FONT_HEIGHT_SMALL - 4;
     int currentY = graphics::getTextPositions(display)[line++];
 
-    // === Show "No Telemetry" if no data available ===
-    if (!lastMeasurementPacket) {
-        display->drawString(x, currentY, "No Telemetry");
-        return;
-    }
-
-    // Decode the telemetry message from the latest received packet
-    const meshtastic_Data &p = lastMeasurementPacket->decoded;
     meshtastic_Telemetry telemetry;
-    if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &telemetry)) {
-        display->drawString(x, currentY, "No Telemetry");
-        return;
+    const char *sender;
+    String agoStr;
+    bool isLocal = (state->currentFrame == 0);
+
+    if (isLocal) {
+        // 显示本地数据
+        if (!getEnvironmentTelemetry(&telemetry)) {
+            display->drawString(x, currentY, "No Telemetry");
+            return;
+        }
+        sender = "Local";
+        agoStr = "now";
+    } else {
+        // 显示其他设备的第(state->currentFrame - 1)个包
+        size_t index = state->currentFrame - 1;
+        if (index >= receivedPackets.size() || !receivedPackets[index]) {
+            display->drawString(x, currentY, "No Data");
+            return;
+        }
+        const meshtastic_Data &p = receivedPackets[index]->decoded;
+        if (!pb_decode_from_bytes(p.payload.bytes, p.payload.size, &meshtastic_Telemetry_msg, &telemetry)) {
+            display->drawString(x, currentY, "Decode Error");
+            return;
+        }
+        sender = getSenderShortName(*receivedPackets[index]);
+        uint32_t agoSecs = service->GetTimeSinceMeshPacket(receivedPackets[index]);
+        agoStr = (agoSecs > 864000) ? "?" : (agoSecs > 3600) ? String(agoSecs / 3600) + "h" : (agoSecs > 60) ? String(agoSecs / 60) + "m" : String(agoSecs) + "s";
     }
 
     const auto &m = telemetry.variant.environment_metrics;
@@ -413,13 +429,6 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
     }
 
     // === First line: Show sender name + time since received (left), and first metric (right) ===
-    const char *sender = getSenderShortName(*lastMeasurementPacket);
-    uint32_t agoSecs = service->GetTimeSinceMeshPacket(lastMeasurementPacket);
-    String agoStr = (agoSecs > 864000) ? "?"
-                    : (agoSecs > 3600) ? String(agoSecs / 3600) + "h"
-                    : (agoSecs > 60)   ? String(agoSecs / 60) + "m"
-                                       : String(agoSecs) + "s";
-
     String leftStr = String(sender) + " (" + agoStr + ")";
     display->drawString(x, currentY, leftStr); // Left side: who and when
 
@@ -461,23 +470,23 @@ void EnvironmentTelemetryModule::drawFrame(OLEDDisplay *display, OLEDDisplayUiSt
 
         entries.push_back(aqi);
 
-        // === IAQ alert logic ===
-        static uint32_t lastAlertTime = 0;
-        uint32_t now = millis();
+        // === IAQ alert logic (only for local) ===
+        if (isLocal) {
+            static uint32_t lastAlertTime = 0;
+            uint32_t now = millis();
+            bool isCooldownOver = (now - lastAlertTime > 60000);
 
-        bool isOwnTelemetry = lastMeasurementPacket->from == nodeDB->getNodeNum();
-        bool isCooldownOver = (now - lastAlertTime > 60000);
+            if (bannerMsg && isCooldownOver) {
+                LOG_INFO("drawFrame: IAQ %d (own) — showing banner: %s", m.iaq, bannerMsg);
+                screen->showSimpleBanner(bannerMsg, 3000);
 
-        if (isOwnTelemetry && bannerMsg && isCooldownOver) {
-            LOG_INFO("drawFrame: IAQ %d (own) — showing banner: %s", m.iaq, bannerMsg);
-            screen->showSimpleBanner(bannerMsg, 3000);
+                // Only buzz if IAQ is over 200
+                if (m.iaq > 200 && moduleConfig.external_notification.enabled && !externalNotificationModule->getMute()) {
+                    playLongBeep();
+                }
 
-            // Only buzz if IAQ is over 200
-            if (m.iaq > 200 && moduleConfig.external_notification.enabled && !externalNotificationModule->getMute()) {
-                playLongBeep();
+                lastAlertTime = now;
             }
-
-            lastAlertTime = now;
         }
     }
     if (m.voltage != 0 || m.current != 0)
@@ -544,11 +553,19 @@ bool EnvironmentTelemetryModule::handleReceivedProtobuf(const meshtastic_MeshPac
         LOG_INFO("(Received from %s): radiation=%fµR/h", sender, t->variant.environment_metrics.radiation);
 
 #endif
-        // release previous packet before occupying a new spot
-        if (lastMeasurementPacket != nullptr)
-            packetPool.release(lastMeasurementPacket);
-
-        lastMeasurementPacket = packetPool.allocCopy(mp);
+        // 如果是本地设备，更新lastMeasurementPacket用于本地显示
+        if (mp.from == nodeDB->getNodeNum()) {
+            if (lastMeasurementPacket != nullptr)
+                packetPool.release(lastMeasurementPacket);
+            lastMeasurementPacket = packetPool.allocCopy(mp);
+        } else {
+            // 其他设备，添加到receivedPackets
+            if (receivedPackets.size() >= maxReceivedPackets) {
+                packetPool.release(receivedPackets.front());
+                receivedPackets.erase(receivedPackets.begin());
+            }
+            receivedPackets.push_back(packetPool.allocCopy(mp));
+        }
     }
 
     return false; // Let others look at this message also if they want
