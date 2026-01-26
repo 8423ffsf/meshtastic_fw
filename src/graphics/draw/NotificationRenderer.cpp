@@ -189,7 +189,8 @@ void NotificationRenderer::drawNumberPicker(OLEDDisplay *display, OLEDDisplayUiS
             currentNumber -= (pow_of_10(numDigits - curSelected - 1));
         }
     } else if (inEvent.inputEvent == INPUT_BROKER_ANYKEY) {
-        if (inEvent.kbchar > 47 && inEvent.kbchar < 58) { // have a digit
+        if (inEvent.kbchar > 47 && inEvent.kbchar < 58) // have a digit
+        {
             currentNumber -= this_digit * (pow_of_10(numDigits - curSelected - 1));
             currentNumber += (inEvent.kbchar - 48) * (pow_of_10(numDigits - curSelected - 1));
             curSelected++;
@@ -696,8 +697,9 @@ void NotificationRenderer::drawTextInput(OLEDDisplay *display, OLEDDisplayUiStat
     if (virtualKeyboard) {
         // Check for timeout and auto-exit if needed
         if (virtualKeyboard->isTimedOut()) {
+#if !defined(M5STACK_CARDPUTER_ADV)
             LOG_INFO("Virtual keyboard timeout - auto-exiting");
-            // Cancel virtual keyboard - call callback with empty string to indicate timeout
+                        // Cancel virtual keyboard - call callback with empty string to indicate timeout
             auto callback = textInputCallback; // Store callback before clearing
 
             // Clean up first to prevent re-entry
@@ -715,6 +717,10 @@ void NotificationRenderer::drawTextInput(OLEDDisplay *display, OLEDDisplayUiStat
             if (screen) {
                 screen->setFrames(graphics::Screen::FOCUS_PRESERVE);
             }
+#else
+            // Use the module's onCancel to safely clean up and avoid double-free
+            OnScreenKeyboardModule::instance().onCancel();
+#endif
             return;
         }
 
