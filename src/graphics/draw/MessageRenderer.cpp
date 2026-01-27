@@ -421,6 +421,19 @@ struct MessageBlock {
     bool mine;
 };
 
+// Helper function to check if a line contains any emote
+static bool lineContainsEmote(const std::string &line) {
+    for (size_t i = 0; i < line.length();) {
+        size_t consumed = 0;
+        int emoteIdx = matchEmoteAt(line.c_str() + i, &consumed);
+        if (emoteIdx >= 0) {
+            return true;
+        }
+        i += (consumed > 0) ? consumed : utf8CharLen(static_cast<uint8_t>(line[i]));
+    }
+    return false;
+}
+
 static int getDrawnLinePixelBottom(int lineTopY, const std::string &line, bool isHeaderLine)
 {
     if (isHeaderLine) {
@@ -428,11 +441,8 @@ static int getDrawnLinePixelBottom(int lineTopY, const std::string &line, bool i
     }
 
     int tallest = FONT_HEIGHT_SMALL;
-    for (int e = 0; e < numEmotes; ++e) {
-        if (line.find(emotes[e].label) != std::string::npos) {
-            if (emotes[e].height > tallest)
-                tallest = emotes[e].height;
-        }
+    if (lineContainsEmote(line)) {
+        tallest = emoteFont.h;
     }
 
     const int lineHeight = std::max(FONT_HEIGHT_SMALL, tallest);
@@ -860,13 +870,7 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
             topY = visualTop - BUBBLE_PAD_TOP_HEADER;
         } else {
             // Body start
-            bool thisLineHasEmote = false;
-            for (int e = 0; e < numEmotes; ++e) {
-                if (cachedLines[b.start].find(emotes[e].label) != std::string::npos) {
-                    thisLineHasEmote = true;
-                    break;
-                }
-            }
+            bool thisLineHasEmote = lineContainsEmote(cachedLines[b.start]);
             if (thisLineHasEmote) {
                 constexpr int EMOTE_PADDING_ABOVE = 4;
                 visualTop -= EMOTE_PADDING_ABOVE;
@@ -899,7 +903,7 @@ void drawTextMessageFrame(OLEDDisplay *display, OLEDDisplayUiState *state, int16
                 if (b.mine)
                     w += 12; // room for ACK/NACK/relay mark
             } else {
-                w = getRenderedLineWidth(display, cachedLines[i], emotes, numEmotes);
+                w = getRenderedLineWidth(display, cachedLines[i]);
             }
             if (w > maxLineW)
                 maxLineW = w;
@@ -1078,18 +1082,6 @@ std::vector<std::string> generateLines(OLEDDisplay *display, const char *headerS
         lines.push_back(line);
 
     return lines;
-}
-// Helper function to check if a line contains any emote
-static bool lineContainsEmote(const std::string &line) {
-    for (size_t i = 0; i < line.length();) {
-        size_t consumed = 0;
-        int emoteIdx = matchEmoteAt(line.c_str() + i, &consumed);
-        if (emoteIdx >= 0) {
-            return true;
-        }
-        i += (consumed > 0) ? consumed : utf8CharLen(static_cast<uint8_t>(line[i]));
-    }
-    return false;
 }
 
 std::vector<int> calculateLineHeights(const std::vector<std::string> &lines,
