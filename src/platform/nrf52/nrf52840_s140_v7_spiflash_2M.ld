@@ -6,7 +6,7 @@ GROUP(-lgcc -lc -lnosys)
 MEMORY
 {
   FLASH (rx)     : ORIGIN = 0x27000, LENGTH = 0xED000 - 0x27000
-  SPIFLASH(r)    : ORIGIN = 0x100000, LENGTH = 0x200000
+  SPIFLASH(r)    : ORIGIN = 0x12000000, LENGTH = 0x200000
   
   /* SRAM required by Softdevice depend on
    * - Attribute Table Size (Number of Services and Characteristics)
