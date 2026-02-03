@@ -1516,4 +1516,14 @@ bool TFTDisplay::connect()
     return true;
 }
 
+#ifdef TFT_COLOR_SUPPORT
+void TFTDisplay::drawColoredBitmap(int x, int y, int w, int h, const uint16_t* rgb565Bitmap)
+{
+    concurrency::LockGuard g(spiLock);
+    tft->pushImage(x, y, w, h, rgb565Bitmap);
+}
+
+
+#endif
+
 #endif // USE_TFTDISPLAY

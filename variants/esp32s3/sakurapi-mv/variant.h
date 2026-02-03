@@ -43,6 +43,7 @@ extern "C" {
 
 // Screen dimensions
 #define USE_TFTDISPLAY 1
+#define TFT_COLOR_SUPPORT 1
 #ifdef DISPLAY_240_135
 #define TFT_MEMORY_WIDTH 240
 #define TFT_WIDTH 240

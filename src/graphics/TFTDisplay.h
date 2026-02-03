@@ -38,6 +38,18 @@ class TFTDisplay : public OLEDDisplay
     // Functions for changing display brightness
     void setDisplayBrightness(uint8_t);
 
+#ifdef TFT_COLOR_SUPPORT
+    /**
+     * Draw a pre-colored RGB565 bitmap directly to the TFT display.
+     * @param x Top-left x-coordinate
+     * @param y Top-left y-coordinate
+     * @param w Bitmap width in pixels
+     * @param h Bitmap height in pixels
+     * @param rgb565Bitmap Pointer to RGB565 data (16-bit per pixel)
+     */
+    void drawColoredBitmap(int x, int y, int w, int h, const uint16_t* rgb565Bitmap);
+#endif
+
     /**
      * shim to make the abstraction happy
      *
