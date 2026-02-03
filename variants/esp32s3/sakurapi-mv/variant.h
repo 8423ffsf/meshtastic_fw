@@ -23,20 +23,41 @@ extern "C" {
 #define I2C_SDA 35
 #define I2C_SCL 16
 
+#define BUTTON_PIN (0)
+#define BUTTON_ACTIVE_LOW true
+#define BUTTON_ACTIVE_PULLUP true
 /*----------------------------------------------------------------------------
  *        Display (ST7789 135x240)
  *----------------------------------------------------------------------------*/
 
 // #define USE_ST7789
 #define ST7789_SPI_HOST SPI3_HOST
+#define DISPLAY_240_135
+
+#undef OLED_CJK_SIZE
+#define OLED_CJK_SIZE 16
+#define EMOTE_FULL
+// #define HAS_TFT 1
+
+#define TFT_MESH_OVERRIDE COLOR565(234,225,231)  //NIPPON VC0042-4
 
 // Screen dimensions
 #define USE_TFTDISPLAY 1
+#ifdef DISPLAY_240_135
+#define TFT_MEMORY_WIDTH 240
 #define TFT_WIDTH 240
-#define TFT_HEIGHT 135
+#define TFT_MEMORY_HEIGHT 240
+#define TFT_HEIGHT 240
 #define TFT_OFFSET_X -53
 #define TFT_OFFSET_Y 40
 #define TFT_OFFSET_ROTATION 2
+#else
+#define TFT_WIDTH 240
+#define TFT_HEIGHT 240
+#define TFT_OFFSET_X 0
+#define TFT_OFFSET_Y -80
+#define TFT_OFFSET_ROTATION 0
+#endif
 
 // SPI pins for display (shared with LoRa)
 #define ST7789_CS ST7789_NSS
