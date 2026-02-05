@@ -42,21 +42,26 @@
 #define HAS_SCREEN 0
 // GPS
 
+#ifdef TINYLORA_V3_GPS
 #define HAS_GPS 1
 #define GPS_RX_PIN 21
 #define GPS_TX_PIN 20
 #define PIN_GPS_EN 2
 #define GPS_EN_ACTIVE 1
+#endif
 
-
-// #define WIRE_INTERFACES_COUNT (1)
-// #define I2C_SDA (20)
-// #define I2C_SCL (21)
-
+#ifdef TINYLORA_V3_I2C
+#define HAS_I2C 1
+#define WIRE_INTERFACES_COUNT (1)
+#define I2C_SDA 20
+#define I2C_SCL 21
+#endif
 
 #define USE_LLCC68
 #define USE_SX1262
 #define USE_SX1268
+
+#define SX126X_MAX_POWER 3
 
 #define LORA_SCK 10
 #define LORA_MISO 6
