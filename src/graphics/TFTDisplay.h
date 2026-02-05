@@ -2,6 +2,7 @@
 
 #include <GpioLogic.h>
 #include <OLEDDisplay.h>
+#include <vector>
 
 /**
  * An adapter class that allows using the LovyanGFX library as if it was an OLEDDisplay implementation.
@@ -75,4 +76,19 @@ class TFTDisplay : public OLEDDisplay
     virtual bool connect() override;
 
     uint16_t *linePixelBuffer = nullptr;
+
+  #ifdef TFT_COLOR_SUPPORT
+    struct ColoredOverlay {
+      int x;
+      int y;
+      int w;
+      int h;
+      const uint16_t *data;
+    };
+
+    std::vector<ColoredOverlay> currentColoredOverlays;
+    std::vector<ColoredOverlay> previousColoredOverlays;
+
+    void invalidateRegion(int x, int y, int w, int h);
+  #endif
 };

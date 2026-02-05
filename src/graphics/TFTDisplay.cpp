@@ -1199,6 +1199,14 @@ void TFTDisplay::display(bool fromBlank)
 
     concurrency::LockGuard g(spiLock);
 
+#ifdef TFT_COLOR_SUPPORT
+    if (!fromBlank && !previousColoredOverlays.empty()) {
+        for (const auto &overlay : previousColoredOverlays) {
+            invalidateRegion(overlay.x, overlay.y, overlay.w, overlay.h);
+        }
+    }
+#endif
+
     uint32_t x, y;
     uint32_t y_byteIndex;
     uint8_t y_byteMask;
@@ -1290,6 +1298,17 @@ void TFTDisplay::display(bool fromBlank)
     // Copy the Buffer to the Back Buffer
     if (somethingChanged)
         memcpy(buffer_back, buffer, displayBufferSize);
+
+#ifdef TFT_COLOR_SUPPORT
+    if (!currentColoredOverlays.empty()) {
+        for (const auto &overlay : currentColoredOverlays) {
+            tft->pushImage(overlay.x, overlay.y, overlay.w, overlay.h, overlay.data);
+        }
+    }
+
+    previousColoredOverlays = currentColoredOverlays;
+    currentColoredOverlays.clear();
+#endif
 }
 
 void TFTDisplay::sdlLoop()
@@ -1517,10 +1536,43 @@ bool TFTDisplay::connect()
 }
 
 #ifdef TFT_COLOR_SUPPORT
+void TFTDisplay::invalidateRegion(int x, int y, int w, int h)
+{
+    if (w <= 0 || h <= 0)
+        return;
+
+    if (x < 0) {
+        w += x;
+        x = 0;
+    }
+    if (y < 0) {
+        h += y;
+        y = 0;
+    }
+
+    if (x >= static_cast<int>(displayWidth) || y >= static_cast<int>(displayHeight))
+        return;
+
+    if (x + w > static_cast<int>(displayWidth))
+        w = static_cast<int>(displayWidth) - x;
+    if (y + h > static_cast<int>(displayHeight))
+        h = static_cast<int>(displayHeight) - y;
+
+    for (int yy = y; yy < y + h; yy++) {
+        uint32_t y_byteIndex = (yy / 8) * displayWidth;
+        uint8_t y_byteMask = (1 << (yy & 7));
+        for (int xx = x; xx < x + w; xx++) {
+            buffer_back[xx + y_byteIndex] ^= y_byteMask;
+        }
+    }
+}
+
 void TFTDisplay::drawColoredBitmap(int x, int y, int w, int h, const uint16_t* rgb565Bitmap)
 {
-    concurrency::LockGuard g(spiLock);
-    tft->pushImage(x, y, w, h, rgb565Bitmap);
+    if (rgb565Bitmap == nullptr || w <= 0 || h <= 0)
+        return;
+
+    currentColoredOverlays.push_back({x, y, w, h, rgb565Bitmap});
 }
 
 
