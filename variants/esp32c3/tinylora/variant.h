@@ -33,6 +33,13 @@
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
 #define TCXO_OPTIONAL
 
+#undef  BATTERY_PIN
+#define BATTERY_PIN            2            // GPIO1
+#define ADC_CHANNEL            ADC1_GPIO2_CHANNEL
+
+#undef  ADC_MULTIPLIER
+#define ADC_MULTIPLIER         1.66666f
+
 #elif defined(TINYLORA_V3)
 
 #define BUTTON_PIN 9
