@@ -13,6 +13,10 @@
 #include "graphics/SharedUIDisplay.h"
 #include "graphics/TimeFormatters.h"
 #include "graphics/emotes.h"
+#if USE_TFTDISPLAY && defined(TFT_COLOR_SUPPORT)
+#include "graphics/emotes_color.h"
+#include "graphics/TFTDisplay.h"
+#endif
 #include "main.h"
 #include "meshUtils.h"
 #include <string>
@@ -29,6 +33,12 @@ using graphics::findEmoteIndex;
 using graphics::matchEmoteAt;
 using graphics::getEmoteBitmap;
 using graphics::parseUtf8CodePoint;
+
+#if USE_TFTDISPLAY && defined(TFT_COLOR_SUPPORT)
+// Use color emotes for TFT displays with color support
+using graphics::colorEmoteFont;
+using graphics::getColorEmoteBitmap;
+#endif
 
 namespace graphics
 {
@@ -165,7 +175,37 @@ void drawStringWithEmotes(OLEDDisplay *display, int x, int y, const std::string 
 
         // Try to match emote at current position
         size_t consumed = 0;
-        int emoteIdx = matchEmoteAt(line.c_str() + i, &consumed);
+        int emoteIdx = -1;
+        bool isColorEmote = false;
+
+#if USE_TFTDISPLAY && defined(TFT_COLOR_SUPPORT)
+        // For TFT displays with color support, try to find colored emote first
+        size_t colorConsumed = 0;
+        uint32_t codePoint = parseUtf8CodePoint(line.c_str() + i, &colorConsumed);
+        uint16_t compressedCP = compressCodePoint(codePoint);  // 压缩码点
+        int colorEmoteIdx = findColorEmoteIndex(compressedCP);
+        
+        if (colorEmoteIdx >= 0 && colorEmoteIdx < graphics::colorEmoteFont.count) {
+            emoteIdx = colorEmoteIdx;
+            consumed = colorConsumed;
+            isColorEmote = true;
+            
+            // Skip variant selectors (U+FE0E text, U+FE0F emoji)
+            if (line[i + consumed]) {
+                size_t nextLen = 0;
+                uint32_t nextCP = parseUtf8CodePoint(line.c_str() + i + consumed, &nextLen);
+                if (nextCP == 0xFE0E || nextCP == 0xFE0F) {
+                    consumed += nextLen;
+                }
+            }
+        } else {
+            // Fall back to monochrome emotes
+            emoteIdx = matchEmoteAt(line.c_str() + i, &consumed);
+        }
+#else
+        // For OLED displays or monochrome TFTs, use monochrome emotes
+        emoteIdx = matchEmoteAt(line.c_str() + i, &consumed);
+#endif
 
         if (emoteIdx >= 0 && consumed > 0) {
             // Flush text buffer first
@@ -183,12 +223,35 @@ void drawStringWithEmotes(OLEDDisplay *display, int x, int y, const std::string 
             }
 
             // Draw emote
+#if USE_TFTDISPLAY && defined(TFT_COLOR_SUPPORT)
+            // For TFT displays with color support, use colored emotes if available
+            if (isColorEmote && emoteIdx >= 0 && emoteIdx < graphics::colorEmoteFont.count) {
+                TFTDisplay* tftDisplay = static_cast<TFTDisplay*>(display);
+                const uint16_t* rgb565Bitmap = getColorEmoteBitmap(emoteIdx);
+                if (rgb565Bitmap) {
+                    int emoteY = fontY + (fontHeight - EMOTE_COLOR_HEIGHT) / 2;
+                    tftDisplay->drawColoredBitmap(cursorX, emoteY, EMOTE_COLOR_WIDTH, EMOTE_COLOR_HEIGHT, rgb565Bitmap);
+                    cursorX += EMOTE_COLOR_WIDTH + 1;
+                }
+            } 
+            // else if (emoteIdx >= 0) {
+            //     // Fall back to monochrome emote
+            //     const uint8_t* bitmap = getEmoteBitmap(emoteIdx);
+            //     if (bitmap) {
+            //         int iconY = fontY + (fontHeight - emoteHeight) / 2;
+            //         display->drawXbm(cursorX, iconY, emoteWidth, emoteHeight, bitmap);
+            //         cursorX += emoteWidth + 1;
+            //     }
+            // }
+#else
+            // For OLED displays or monochrome TFTs, use monochrome emotes
             const uint8_t* bitmap = getEmoteBitmap(emoteIdx);
             if (bitmap) {
                 int iconY = fontY + (fontHeight - emoteHeight) / 2;
                 display->drawXbm(cursorX, iconY, emoteWidth, emoteHeight, bitmap);
                 cursorX += emoteWidth + 1;
             }
+#endif
             i += consumed;
         } else {
             // Regular character - add to buffer
