@@ -61,8 +61,6 @@
 #define USE_SX1262
 #define USE_SX1268
 
-#define SX126X_MAX_POWER 3
-
 #define LORA_SCK 10
 #define LORA_MISO 6
 #define LORA_MOSI 7
