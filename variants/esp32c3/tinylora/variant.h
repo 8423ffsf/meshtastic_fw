@@ -1,11 +1,11 @@
 #if defined(TINYLORA_V2)
 
 #define BUTTON_PIN 9
-#define LED_PIN 2
+#define LED_PIN 8
 #define LED_STATE_ON 1
 
 #define HAS_SCREEN 0
-#define HAS_GPS 1
+#define HAS_GPS 0
 #undef GPS_RX_PIN 21
 #undef GPS_TX_PIN 20
 
@@ -34,11 +34,11 @@
 #define TCXO_OPTIONAL
 
 #undef  BATTERY_PIN
-#define BATTERY_PIN            2            // GPIO1
-#define ADC_CHANNEL            ADC1_GPIO2_CHANNEL
+#define BATTERY_PIN           12            // GPIO1
+#define ADC_CHANNEL            ADC1_GPIO1_CHANNEL
 
 #undef  ADC_MULTIPLIER
-#define ADC_MULTIPLIER         1.66666f
+#define ADC_MULTIPLIER         1.6f
 
 #elif defined(TINYLORA_V3)
 
