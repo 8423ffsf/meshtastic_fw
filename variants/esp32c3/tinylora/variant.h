@@ -34,7 +34,7 @@
 #define TCXO_OPTIONAL
 
 #undef  BATTERY_PIN
-#define BATTERY_PIN           12            // GPIO1
+#define BATTERY_PIN           1            // GPIO1
 #define ADC_CHANNEL            ADC1_GPIO1_CHANNEL
 
 #undef  ADC_MULTIPLIER
